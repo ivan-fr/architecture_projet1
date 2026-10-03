@@ -20,6 +20,24 @@ async function sources(folder: string): Promise<string[]> {
 
 const slash = (path: string) => path.replaceAll('\\', '/');
 
+const importsOf = (code: string): string[] => [...code.matchAll(/from '([^']+)'/g)].map((match) => match[1] ?? '');
+
+/** Les fichiers d'une couche (hors tests) qui importent un chemin interdit. */
+async function offenders(layer: string, forbidden: string): Promise<string[]> {
+    const files = (await sources(join('src', layer))).filter((file) => !slash(file).endsWith('.test.ts'));
+    const broken: string[] = [];
+    for (const file of files) {
+        if (importsOf(await readFile(file, 'utf8')).some((target) => target.includes(forbidden))) broken.push(slash(file));
+    }
+    return broken;
+}
+
+//DEMANDE 05 : le métier ne sait pas que les usagers sont dans un fichier
+test('le domaine et l\'application ne connaissent pas l\'infrastructure', async () => {
+    assert.deepEqual(await offenders('domain', 'infrastructure'), []);
+    assert.deepEqual(await offenders('application', 'infrastructure'), []);
+});
+
 //DEMANDE 04 : les tests donnent le même résultat quel que soit le jour où on les lance
 test('seule l\'infrastructure lit l\'horloge de la machine', async () => {
     // `new Date('2026-…')` lit une date écrite, c'est permis. `new Date()` et `Date.now()` lisent l'heure qu'il est.
