@@ -1,10 +1,11 @@
-import test, { type TestContext } from 'node:test';
+import test, { after, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { User } from '../../domain/user.ts';
+import { userRepositoryContract } from '../../testing/userRepository.contract.ts';
 import { fileUserRepository } from './fileUserRepository.ts';
 
 const LINA: User = { id: 'u1', name: 'Lina', riderType: 'subscriber' };
@@ -58,4 +59,11 @@ test('enregistrer un usager déjà connu le remplace, sans doublon', async (t) =
     await fileUserRepository(path).add({ ...LINA, riderType: 'non-subscriber' });
 
     assert.equal((await fileUserRepository(path).byId('u1'))?.riderType, 'non-subscriber');
+});
+
+//CONTRAT : le fichier se comporte comme la mémoire
+userRepositoryContract('fileUserRepository', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'velos-'));
+    after(() => rm(folder, { recursive: true, force: true }));
+    return fileUserRepository(join(folder, 'users.json'));
 });
