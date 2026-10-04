@@ -28,3 +28,7 @@ test('un vélo pris à l\'instant est en trajet', () => {
 test('un vélo pris il y a trois jours est perdu', () => {
     assert.equal(statusOfTakenBike(TAKEN_AT, hoursLater(72)), 'lost');
 });
+
+test('un trajet ne peut pas finir avant d\'avoir commencé', () => {
+    assert.throws(() => statusOfTakenBike(TAKEN_AT, new Date('2026-09-30T08:00:00Z')), /before/);
+});

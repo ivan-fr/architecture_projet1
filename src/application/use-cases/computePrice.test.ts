@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { Money } from '../../domain/money.ts';
+import { statusOfTakenBike } from '../../domain/lostBike.ts';
 import { computePrice } from './computePrice.ts';
 
 //DEMANDE 01
@@ -72,4 +74,14 @@ test('abonné 31 minutes => 1 euro', () => {
 
 test('sans type indiqué, le tarif non abonné est utilisé', () => {
     assert.equal(computePrice(25), 1);
+});
+
+test('une durée négative est refusée', () => {
+    assert.throws(() => computePrice(-1), /negative/);
+});
+
+test('aucune donnée invalide n\'est acceptée par le domaine, donc elle n\'est jamais enregistrée', () => {
+    assert.throws(() => Money.euros(1.234), /cent/);
+    assert.throws(() => computePrice(-1), /negative/);
+    assert.throws(() => statusOfTakenBike(new Date('2026-10-03T08:15:00Z'), new Date('2026-10-03T07:00:00Z')), /before/);
 });
