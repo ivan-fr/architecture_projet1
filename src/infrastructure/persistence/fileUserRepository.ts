@@ -1,5 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import type { User } from '../../domain/user.ts';
+import { userOf, type RawUser, type User } from '../../domain/user.ts';
 import type { UserRepository } from '../../domain/ports/userRepository.ts';
 
 /** Les usagers dans un fichier JSON : ils survivent à l'arrêt du logiciel. */
@@ -7,7 +7,8 @@ export function fileUserRepository(path: string): UserRepository {
   /** Un fichier absent n'est pas une panne : c'est un service qui n'a encore aucun usager. */
   async function readAll(): Promise<User[]> {
     try {
-      return JSON.parse(await readFile(path, 'utf8')) as User[];
+      // Le fichier peut avoir été modifié à la main : chaque usager relu repasse par la règle.
+      return (JSON.parse(await readFile(path, 'utf8')) as RawUser[]).map(userOf);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
       throw error;
@@ -22,7 +23,8 @@ export function fileUserRepository(path: string): UserRepository {
     async byId(id) {
       return (await readAll()).find((user) => user.id === id);
     },
-    async add(user) {
+    async add(raw) {
+      const user = userOf(raw);
       const others = (await readAll()).filter((known) => known.id !== user.id);
       await writeAll([...others, user]);
     },
