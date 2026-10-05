@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { emailOf } from '../../../domain/email.ts';
 import type { User } from '../../../domain/user.ts';
 import { inMemoryOngoingRideRepository } from '../../../infrastructure/in-memory/inMemoryOngoingRideRepository.ts';
 import { inMemoryUserRepository } from '../../../infrastructure/in-memory/inMemoryUserRepository.ts';
 import { TakeBikeHandler } from './takeBike.handler.ts';
 
-const LINA: User = { id: 'u1', name: 'Lina', riderType: 'subscriber' };
+const LINA: User = { id: 'u1', name: 'Lina', email: emailOf('lina@beaulieu.fr'), riderType: 'subscriber' };
 const NOW = new Date('2026-10-03T08:15:00Z');
 const clockAt = (now: Date) => ({ now: () => now });
 
