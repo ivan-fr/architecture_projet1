@@ -27,3 +27,7 @@ test('un montant négatif est refusé', () => {
 test('un montant plus fin que le centime est refusé', () => {
     assert.throws(() => Money.euros(0.001), /cent/);
 });
+
+test('un montant avec plus de deux décimales est refusé', () => {
+    assert.throws(() => Money.euros(1.234), /cent/);
+});

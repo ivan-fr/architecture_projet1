@@ -34,5 +34,14 @@ export function userRepositoryContract(name: string, make: () => Promise<UserRep
 
             assert.equal((await users.byId('u1'))?.riderType, 'non-subscriber');
         });
+
+        //DEMANDE 07 : aucune donnée invalide n'est enregistrée, par aucun chemin
+        test('un usager invalide est refusé, et rien n\'est enregistré', async () => {
+            const users = await make();
+
+            await assert.rejects(() => users.add({ id: 'u9', name: '', riderType: 'subscriber' }), /name/);
+            await assert.rejects(() => users.add({ id: 'u9', name: 'Sam', riderType: 'vip' } as unknown as User), /rider type/);
+            assert.equal(await users.byId('u9'), undefined);
+        });
     });
 }

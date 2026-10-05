@@ -10,12 +10,20 @@ export interface Tarif {
 const HALF_HOUR_IN_MINUTES = 30;
 const FREE_HALF_HOURS_FOR_SUBSCRIBERS = 1;
 
+/** Une durée n'est jamais négative : le métier refuse ce cas avant tout calcul. */
+export function assertValidMinutes(minutes: number): void {
+  if (!Number.isFinite(minutes)) throw new Error('ride duration must be a finite number');
+  if (minutes < 0) throw new Error('ride duration cannot be negative');
+}
+
 /** Le tarif en vigueur. Le seul endroit où s'écrit le prix de la demi-heure. */
 export const STANDARD_TARIFF: Tarif = { pricePerHalfHour: Money.euros(1) };
 
 /** Le prix d'un trajet : chaque demi-heure entamée est due, la première est offerte aux abonnés. */
 export function priceOfRide(minutes: number, riderType: CustomerType = 'non-subscriber', tarif: Tarif = STANDARD_TARIFF): Money {
-  if (minutes <= 0) return Money.cents(0);
+  assertValidMinutes(minutes);
+
+  if (minutes === 0) return Money.cents(0);
 
   const halfHours = Math.ceil(minutes / HALF_HOUR_IN_MINUTES);
   const freeHalfHours = riderType === 'subscriber' ? FREE_HALF_HOURS_FOR_SUBSCRIBERS : 0;

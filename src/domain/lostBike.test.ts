@@ -28,3 +28,8 @@ test('un vélo pris à l\'instant est en trajet', () => {
 test('un vélo pris il y a trois jours est perdu', () => {
     assert.equal(statusOfTakenBike(TAKEN_AT, hoursLater(72)), 'lost');
 });
+
+//DEMANDE 07
+test('un vélo pris dans le futur est une donnée absurde, refusée', () => {
+    assert.throws(() => statusOfTakenBike(TAKEN_AT, new Date('2026-09-30T08:00:00Z')), /future/);
+});

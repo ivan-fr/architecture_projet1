@@ -1,6 +1,6 @@
 import test, { after, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -66,4 +66,12 @@ userRepositoryContract('fileUserRepository', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'velos-'));
     after(() => rm(folder, { recursive: true, force: true }));
     return fileUserRepository(join(folder, 'users.json'));
+});
+
+//DEMANDE 07 : le fichier aussi peut mentir
+test('un usager invalide écrit à la main dans le fichier est refusé à la relecture', async (t) => {
+    const path = await freshFile(t);
+    await writeFile(path, JSON.stringify([{ id: 'u1', name: '', riderType: 'subscriber' }]));
+
+    await assert.rejects(() => fileUserRepository(path).byId('u1'), /name/);
 });

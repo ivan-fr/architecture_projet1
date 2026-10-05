@@ -10,6 +10,8 @@ export type TakenBikeStatus = 'in-ride' | 'lost';
  * c'est ce qui rend son test identique, quel que soit le jour où on le lance.
  */
 export function statusOfTakenBike(takenAt: Date, now: Date): TakenBikeStatus {
+  // Le vélo n'est pas rendu : aucune heure de fin ici. Une prise après « maintenant » est une donnée absurde.
+  if (now.getTime() < takenAt.getTime()) throw new Error('a bike cannot be taken in the future');
   const hoursAway = (now.getTime() - takenAt.getTime()) / MILLISECONDS_PER_HOUR;
   return hoursAway >= LOST_AFTER_HOURS ? 'lost' : 'in-ride';
 }
