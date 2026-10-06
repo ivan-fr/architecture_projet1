@@ -72,6 +72,17 @@ test('une station écrite à la main dans la base avec trop de vélos est refus�
     await assert.rejects(() => sqlStationRepository(database).byId('gare'), /full/);
 });
 
+//DEMANDE 11 : les pannes survivent à la relecture
+test('une station relue garde ses vélos en panne', async () => {
+    const stations = sqlStationRepository(openDatabase());
+    await stations.save(Station.of({ id: 'gare', docks: 20, bikes: ['b1', 'b2', 'b3'], brokenBikes: ['b2'] }));
+
+    const station = await stations.byId('gare');
+
+    assert.deepEqual(station?.brokenBikes, ['b2']);
+    assert.equal(station?.availableBikes, 2);
+});
+
 test('un usager enregistré est retrouvé après un redémarrage de la base', async (t) => {
     const path = await freshDatabaseFile(t);
     const before = openDatabase(path);
