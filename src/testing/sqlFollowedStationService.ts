@@ -1,7 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { Station } from '../domain/station.ts';
 import { emailOf } from '../domain/email.ts';
-import { userOf } from '../domain/user.ts';
+import { aUser } from './builders.ts';
 import type { Letter } from '../domain/ports/mailer.ts';
 import { sqlStationRepository } from '../infrastructure/persistence/sqlite/sqlStationRepository.ts';
 import { sqlUserRepository } from '../infrastructure/persistence/sqlite/sqlUserRepository.ts';
@@ -18,7 +18,7 @@ import { regulationMail } from '../application/listeners/regulationMail.ts';
 
 export async function seedFollowedStations(database: DatabaseSync): Promise<void> {
   const users = sqlUserRepository(database), stations = sqlStationRepository(database);
-  for (const id of ['u1', 'u2', 'u3']) await users.add(userOf({ id, name: id, email: `${id}@beaulieu.fr`, riderType: 'subscriber' }));
+  for (const id of ['u1', 'u2', 'u3']) await users.add(aUser().withId(id).named(id).build());
   await stations.save(Station.of({ id: 'gare', docks: 1, bikes: ['b1'] }));
   await stations.save(Station.of({ id: 'mairie', docks: 1 }));
 }

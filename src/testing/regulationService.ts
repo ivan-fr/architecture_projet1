@@ -1,6 +1,6 @@
 import { Station } from '../domain/station.ts';
 import { emailOf } from '../domain/email.ts';
-import { userOf } from '../domain/user.ts';
+import { aUser } from './builders.ts';
 import type { OngoingRide } from '../domain/ongoingRide.ts';
 import type { Letter, Mailer } from '../domain/ports/mailer.ts';
 import { inMemoryUserRepository } from '../infrastructure/in-memory/inMemoryUserRepository.ts';
@@ -19,7 +19,7 @@ export function regulationService(options: { count?: number; docks?: number; des
     Station.of({ id: 'mairie', docks: 1, bikes: options.destinationBikes ?? [] }),
   ], records);
   const rides = inMemoryOngoingRideRepository(records);
-  const users = inMemoryUserRepository([userOf({ id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'subscriber' })]);
+  const users = inMemoryUserRepository([aUser().build()]);
   const clock = { now: () => new Date('2026-10-06T08:00:00Z') };
   const events = inMemoryEventBus();
   const letters: Letter[] = [];

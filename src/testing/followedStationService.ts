@@ -1,6 +1,6 @@
 import { Station } from '../domain/station.ts';
 import { emailOf } from '../domain/email.ts';
-import { userOf } from '../domain/user.ts';
+import { aUser } from './builders.ts';
 import type { OngoingRide } from '../domain/ongoingRide.ts';
 import type { Mailer, Letter } from '../domain/ports/mailer.ts';
 import type { AppNotifier } from '../domain/ports/appNotifier.ts';
@@ -33,7 +33,7 @@ export function followedStationService(options: {
     Station.of({ id: 'gare', docks: options.docks ?? 2, bikes: Array.from({ length: options.count ?? 1 }, (_, index) => `b${index + 1}`) }),
     Station.of({ id: 'mairie', docks: 1 }),
   ], records);
-  const users = inMemoryUserRepository(['u1', 'u2', 'u3'].map((id) => userOf({ id, name: id, email: `${id}@beaulieu.fr`, riderType: 'subscriber' })));
+  const users = inMemoryUserRepository(['u1', 'u2', 'u3'].map((id) => aUser().withId(id).named(id).build()));
   const followers = inMemoryStationFollowerRepository(), app = inMemoryAppNotifier(), events = inMemoryEventBus();
   const letters: Letter[] = [], messages: TextMessage[] = [];
   const clock = { now: () => new Date('2026-10-06T08:00:00Z') };

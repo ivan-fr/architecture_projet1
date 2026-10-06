@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -6,14 +6,14 @@ import { tmpdir } from 'node:os';
 import { stationFollowerRepositoryContract } from '../../../testing/stationFollowerRepository.contract.ts';
 import type { DatabaseSync } from 'node:sqlite';
 import { Station } from '../../../domain/station.ts';
-import { userOf } from '../../../domain/user.ts';
+import { aUser } from '../../../testing/builders.ts';
 import { sqlStationRepository } from './sqlStationRepository.ts';
 import { sqlUserRepository } from './sqlUserRepository.ts';
 import { openDatabase } from './sqliteDatabase.ts';
 import { sqlStationFollowerRepository } from './sqlStationFollowerRepository.ts';
 
 async function seed(database: DatabaseSync) {
-    for (const id of ['u1', 'u2']) await sqlUserRepository(database).add(userOf({ id, name: id, email: `${id}@beaulieu.fr`, riderType: 'subscriber' }));
+    for (const id of ['u1', 'u2']) await sqlUserRepository(database).add(aUser().withId(id).named(id).build());
     for (const id of ['gare', 'mairie']) await sqlStationRepository(database).save(Station.of({ id, docks: 2 }));
 }
 
@@ -24,19 +24,28 @@ stationFollowerRepositoryContract('sqlStationFollowerRepository', async (t) => {
     return sqlStationFollowerRepository(database);
 });
 
-test('les suivis survivent à une nouvelle connexion et ne sont pas dupliqués', async (t) => {
+/** Un fichier de base neuf, avec Lina qui suit déjà la gare ; le dossier est effacé à la fin du test. */
+async function databaseWhereLinaFollowsTheStation(t: TestContext): Promise<string> {
     const folder = await mkdtemp(join(tmpdir(), 'velos-followers-'));
     t.after(() => rm(folder, { recursive: true, force: true }));
     const path = join(folder, 'beaulieu.sqlite');
-    const before = openDatabase(path);
-    try { await seed(before); await sqlStationFollowerRepository(before).follow({ userId: 'u1', stationId: 'gare' }); }
-    finally { before.close(); }
+    const database = openDatabase(path);
+    try {
+        await seed(database);
+        await sqlStationFollowerRepository(database).follow({ userId: 'u1', stationId: 'gare' });
+    } finally { database.close(); }
+    return path;
+}
+
+test('les suivis survivent à une nouvelle connexion et ne sont pas dupliqués', async (t) => {
+    const after = openDatabase(await databaseWhereLinaFollowsTheStation(t));
+
     // La base est fermée avant la fin du test : sous Windows, un fichier SQLite ouvert ne peut pas être effacé.
-    const after = openDatabase(path);
     let followers;
     try {
         await sqlStationFollowerRepository(after).follow({ userId: 'u1', stationId: 'gare' });
         followers = await sqlStationFollowerRepository(after).followersOf('gare');
     } finally { after.close(); }
+
     assert.deepEqual(followers, ['u1']);
 });

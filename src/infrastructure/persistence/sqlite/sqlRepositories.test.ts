@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { Station } from '../../../domain/station.ts';
-import { emailOf } from '../../../domain/email.ts';
+import { aUser } from '../../../testing/builders.ts';
 import { ongoingRideRepositoryContract } from '../../../testing/ongoingRideRepository.contract.ts';
 import { userRepositoryContract } from '../../../testing/userRepository.contract.ts';
 import { openDatabase } from './sqliteDatabase.ts';
@@ -86,7 +86,7 @@ test('une station relue garde ses vélos en panne', async () => {
 test('un usager enregistré est retrouvé après un redémarrage de la base', async (t) => {
     const path = await freshDatabaseFile(t);
     const before = openDatabase(path);
-    await sqlUserRepository(before).add({ id: 'u1', name: 'Lina', email: emailOf('lina@beaulieu.fr'), riderType: 'subscriber' });
+    await sqlUserRepository(before).add(aUser().build());
     before.close();
 
     const after = openDatabase(path);

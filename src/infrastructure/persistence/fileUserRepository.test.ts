@@ -4,13 +4,13 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { emailOf } from '../../domain/email.ts';
 import type { User } from '../../domain/user.ts';
 import { userRepositoryContract } from '../../testing/userRepository.contract.ts';
 import { fileUserRepository } from './fileUserRepository.ts';
+import { aUser } from '../../testing/builders.ts';
 
-const LINA: User = { id: 'u1', name: 'Lina', email: emailOf('lina@beaulieu.fr'), riderType: 'subscriber' };
-const THEO: User = { id: 'u2', name: 'Théo', email: emailOf('theo@beaulieu.fr'), riderType: 'non-subscriber' };
+const LINA: User = aUser().build();
+const THEO: User = aUser().withId('u2').named('Théo').nonSubscriber().build();
 
 /** Un fichier neuf dans un dossier neuf, effacé à la fin du test : aucun test ne dépend d'un autre. */
 async function freshFile(t: TestContext): Promise<string> {
@@ -57,7 +57,7 @@ test('au tout premier démarrage, sans fichier, on ne trouve personne et rien ne
 test('enregistrer un usager déjà connu le remplace, sans doublon', async (t) => {
     const path = await freshFile(t);
     await fileUserRepository(path).add(LINA);
-    await fileUserRepository(path).add({ ...LINA, riderType: 'non-subscriber' });
+    await fileUserRepository(path).add(aUser().nonSubscriber().build());
 
     assert.equal((await fileUserRepository(path).byId('u1'))?.riderType, 'non-subscriber');
 });
@@ -72,7 +72,7 @@ userRepositoryContract('fileUserRepository', async () => {
 //DEMANDE 07 : le fichier aussi peut mentir
 test('un usager invalide écrit à la main dans le fichier est refusé à la relecture', async (t) => {
     const path = await freshFile(t);
-    await writeFile(path, JSON.stringify([{ id: 'u1', name: '', email: 'lina@beaulieu.fr', riderType: 'subscriber' }]));
+    await writeFile(path, JSON.stringify([aUser().named('').raw()]));
 
     await assert.rejects(() => fileUserRepository(path).byId('u1'), /name/);
 });
