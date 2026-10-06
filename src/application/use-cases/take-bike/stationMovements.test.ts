@@ -35,3 +35,11 @@ test('un retour refusé par une station pleine ne termine pas le trajet', async 
     assert.deepEqual((await movements.byStation('mairie'))?.bikes, ['b2']);
     assert.ok(await rides.ofUser('u1'));
 });
+
+test('modifier une date relue ne change pas le trajet enregistré', async () => {
+    const { take, rides } = service();
+    await take.handle({ userId: 'u1', stationId: 'gare' });
+    const copy = (await rides.ofUser('u1'))!;
+    copy.startedAt.setTime(NaN);
+    assert.equal((await rides.ofUser('u1'))?.startedAt.toISOString(), '2026-10-06T08:00:00.000Z');
+});

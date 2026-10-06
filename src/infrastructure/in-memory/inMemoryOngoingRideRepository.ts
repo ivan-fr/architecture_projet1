@@ -5,11 +5,12 @@ import type { OngoingRideRepository } from '../../domain/ports/ongoingRideReposi
 export function inMemoryOngoingRideRepository(rides = new Map<string, OngoingRide>()): OngoingRideRepository {
   return {
     async ofUser(userId) {
-      return rides.get(userId);
+      const ride = rides.get(userId);
+      return ride && ongoingRideOf({ ...ride, startedAt: new Date(ride.startedAt) });
     },
     async save(raw) {
       const ride = ongoingRideOf(raw);
-      rides.set(ride.userId, ride);
+      rides.set(ride.userId, { ...ride, startedAt: new Date(ride.startedAt) });
     },
   };
 }

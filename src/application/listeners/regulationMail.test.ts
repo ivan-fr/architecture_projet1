@@ -59,3 +59,24 @@ test('une panne mail au retour ne remet pas le trajet en cours', async () => {
     assert.deepEqual((await movements.byStation('mairie'))?.bikes, ['b1']);
     assert.equal(events.failures.length, 1);
 });
+
+import { emailOf } from '../../domain/email.ts';
+import { inMemoryEventBus } from '../../infrastructure/in-memory/inMemoryEventBus.ts';
+import { regulationMail } from './regulationMail.ts';
+
+test('tous les agents sont tentés même si le premier mailer lève immédiatement', async () => {
+    const events = inMemoryEventBus();
+    const attempted: string[] = [];
+    regulationMail(events, { send: (letter) => { attempted.push(letter.to); if (letter.to === 'offline@beaulieu.fr') throw new Error('offline'); return Promise.resolve(); } }, [emailOf('offline@beaulieu.fr'), emailOf('ok@beaulieu.fr'), emailOf('ok@beaulieu.fr')]);
+    await events.publish({ type: 'StationEmpty', stationId: 'gare' });
+    assert.deepEqual(attempted, ['offline@beaulieu.fr', 'ok@beaulieu.fr']);
+    assert.equal(events.failures.length, 1);
+});
+
+test('le mail observe le trajet déjà enregistré', async () => {
+    const { take, rides, events } = regulationService();
+    const seen: boolean[] = [];
+    regulationMail(events, { send: async () => { seen.push((await rides.ofUser('u1')) !== undefined); } }, [emailOf('observer@beaulieu.fr')]);
+    await take.handle({ userId: 'u1', stationId: 'gare' });
+    assert.deepEqual(seen, [true]);
+});
