@@ -43,3 +43,19 @@ test('un retour refusé n’envoie aucun mail et conserve le trajet', async () =
     assert.deepEqual(letters, []);
     assert.ok(await rides.ofUser('u1'));
 });
+
+test('un refus de prise ne déclenche aucune notification', async () => {
+    const { take, letters, rides } = regulationService({ count: 0 });
+    await assert.rejects(() => take.handle({ userId: 'u1', stationId: 'gare' }), /empty/);
+    assert.equal(await rides.ofUser('u1'), undefined);
+    assert.deepEqual(letters, []);
+});
+
+test('une panne mail au retour ne remet pas le trajet en cours', async () => {
+    const { take, back, rides, events, movements } = regulationService({ count: 2, docks: 3, mailer: { send: async () => { throw new Error('offline'); } } });
+    await take.handle({ userId: 'u1', stationId: 'gare' });
+    await back.handle({ userId: 'u1', stationId: 'mairie' });
+    assert.equal(await rides.ofUser('u1'), undefined);
+    assert.deepEqual((await movements.byStation('mairie'))?.bikes, ['b1']);
+    assert.equal(events.failures.length, 1);
+});

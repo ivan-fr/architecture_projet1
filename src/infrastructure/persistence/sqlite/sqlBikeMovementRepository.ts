@@ -1,5 +1,6 @@
+import { assertBikeDeparture, assertBikeArrival } from '../../../domain/bikeMovement.ts';
 import type { DatabaseSync } from 'node:sqlite';
-import { bikeRideOf, assertBikeReturn, type BikeRide } from '../../../domain/bikeRide.ts';
+import { bikeRideOf, type BikeRide } from '../../../domain/bikeRide.ts';
 import type { BikeMovementRepository } from '../../../domain/ports/bikeMovementRepository.ts';
 import { assertCurrentStation } from '../../stationSnapshot.ts';
 import { inTransaction } from './sqliteDatabase.ts';
@@ -17,6 +18,7 @@ export function sqlBikeMovementRepository(database: DatabaseSync): BikeMovementR
     async rideOfUser(userId) { return activeRide(database, userId); },
     async take(before, after, raw) {
       const ride = bikeRideOf(raw);
+      assertBikeDeparture(before, after, ride);
       inTransaction(database, () => {
         assertCurrentStation(before, readStation(database, before.id));
         if (database.prepare('select 1 from rides where user_id = ? and ended_at is null').get(ride.userId)) throw new Error(`${ride.userId} is already riding`);
@@ -27,7 +29,7 @@ export function sqlBikeMovementRepository(database: DatabaseSync): BikeMovementR
     },
     async return(before, after, raw, endedAt) {
       const ride = bikeRideOf(raw);
-      assertBikeReturn(ride, endedAt);
+      assertBikeArrival(before, after, ride, endedAt);
       inTransaction(database, () => {
         assertCurrentStation(before, readStation(database, before.id));
         const current = activeRide(database, ride.userId);

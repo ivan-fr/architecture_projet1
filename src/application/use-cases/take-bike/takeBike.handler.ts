@@ -25,6 +25,7 @@ export class TakeBikeHandler {
   readonly #movements: BikeMovementRepository | undefined;
 
   constructor({ users, rides, clock, movements, events }: Dependencies) {
+    if (events && !movements) throw new Error('station events need a movement repository');
     this.#users = users;
     this.#rides = rides;
     this.#clock = clock;
