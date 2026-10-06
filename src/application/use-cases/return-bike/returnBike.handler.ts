@@ -1,15 +1,18 @@
+import type { EventPublisher } from '../../../domain/ports/eventBus.ts';
+import { publishStationBoundary } from '../../publishStationBoundary.ts';
 import { Station } from '../../../domain/station.ts';
 import { assertBikeReturn } from '../../../domain/bikeRide.ts';
 import type { Clock } from '../../../domain/ports/clock.ts';
 import type { BikeMovementRepository } from '../../../domain/ports/bikeMovementRepository.ts';
 import type { ReturnBike } from './returnBike.command.ts';
 
-interface Dependencies { movements: BikeMovementRepository; clock: Clock; }
+interface Dependencies { movements: BikeMovementRepository; clock: Clock; events?: EventPublisher; }
 
 export class ReturnBikeHandler {
   readonly #movements: BikeMovementRepository;
   readonly #clock: Clock;
-  constructor({ movements, clock }: Dependencies) { this.#movements = movements; this.#clock = clock; }
+  readonly #events: EventPublisher | undefined;
+  constructor({ movements, clock, events }: Dependencies) { this.#movements = movements; this.#clock = clock; this.#events = events; }
 
   async handle({ userId, stationId }: ReturnBike): Promise<void> {
     const ride = await this.#movements.rideOfUser(userId);
@@ -21,5 +24,6 @@ export class ReturnBikeHandler {
     const station = Station.of({ id: before.id, docks: before.docks, bikes: before.bikes, brokenBikes: before.brokenBikes });
     station.returnBike(ride.bikeId);
     await this.#movements.return(before, station, ride, endedAt);
+    await publishStationBoundary(this.#events, before, station);
   }
 }
