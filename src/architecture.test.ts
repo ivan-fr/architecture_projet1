@@ -56,11 +56,14 @@ function testCasesOf(code: string): TestCase[] {
     return cases;
 }
 
-/** La préparation : les lignes avant la première ligne vide ou la première vérification. */
+/**
+ * La préparation : tout ce qui précède la première vérification, lignes vides et commentaires exclus.
+ * L'action testée (souvent une ligne) est comptée avec : des lignes vides ne cachent rien.
+ */
 function preparationLines({ lines }: TestCase): number {
-    const firstBreak = lines.findIndex((line) => line.trim() === '' || /\bassert\b/.test(line));
-    const preparation = firstBreak === -1 ? lines : lines.slice(0, firstBreak);
-    return preparation.filter((line) => !line.trim().startsWith('//')).length;
+    const firstCheck = lines.findIndex((line) => /\bassert\b/.test(line));
+    const preparation = firstCheck === -1 ? lines : lines.slice(0, firstCheck);
+    return preparation.filter((line) => line.trim() !== '' && !line.trim().startsWith('//')).length;
 }
 
 const MAX_PREPARATION_LINES = 10;
