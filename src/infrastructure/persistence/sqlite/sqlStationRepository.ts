@@ -14,13 +14,9 @@ interface BikeRow {
   broken: number;
 }
 
-/**
- * Les stations dans la base SQL : une ligne par station, une ligne par vélo à quai.
- * C'est le seul fichier où une station devient plate, et le seul où elle redevient une station.
- */
-export function sqlStationRepository(database: DatabaseSync): StationRepository {
-  return {
-    async byId(id) {
+
+/** Mapping partagé par le repository de station et la transaction de mouvement. */
+export function readStation(database: DatabaseSync, id: string): Station | undefined {
       const row = database.prepare('select id, docks from stations where id = ?').get(id) as StationRow | undefined;
       if (row === undefined) return undefined;
       const bikes = database
@@ -33,9 +29,9 @@ export function sqlStationRepository(database: DatabaseSync): StationRepository 
         bikes: bikes.map((bike) => bike.bike_id),
         brokenBikes: bikes.filter((bike) => bike.broken === 1).map((bike) => bike.bike_id),
       });
-    },
-    async save(station) {
-      inTransaction(database, () => {
+}
+
+export function writeStation(database: DatabaseSync, station: Station): void {
         database
           .prepare('insert into stations (id, docks) values (?, ?) on conflict (id) do update set docks = excluded.docks')
           .run(station.id, station.docks);
@@ -43,7 +39,12 @@ export function sqlStationRepository(database: DatabaseSync): StationRepository 
         const insertBike = database.prepare('insert into station_bikes (station_id, bike_id, position, broken) values (?, ?, ?, ?)');
         const broken = new Set(station.brokenBikes);
         station.bikes.forEach((bikeId, position) => insertBike.run(station.id, bikeId, position, broken.has(bikeId) ? 1 : 0));
-      });
-    },
+}
+
+/** Les règles restent dans Station ; cet adaptateur ne fait que lire et écrire les lignes. */
+export function sqlStationRepository(database: DatabaseSync): StationRepository {
+  return {
+    async byId(id) { return readStation(database, id); },
+    async save(station) { inTransaction(database, () => writeStation(database, station)); },
   };
 }

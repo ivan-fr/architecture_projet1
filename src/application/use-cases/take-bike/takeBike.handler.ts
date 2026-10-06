@@ -1,3 +1,5 @@
+import type { BikeMovementRepository } from '../../../domain/ports/bikeMovementRepository.ts';
+import { Station } from '../../../domain/station.ts';
 import { startRide } from '../../../domain/ongoingRide.ts';
 import type { Clock } from '../../../domain/ports/clock.ts';
 import type { OngoingRideRepository } from '../../../domain/ports/ongoingRideRepository.ts';
@@ -8,6 +10,7 @@ interface Dependencies {
   users: UserRepository;
   rides: OngoingRideRepository;
   clock: Clock;
+  movements?: BikeMovementRepository;
 }
 
 /** Prendre un vélo : l'ordre des opérations, et rien d'autre. Les règles sont dans le domaine. */
@@ -15,11 +18,13 @@ export class TakeBikeHandler {
   readonly #users: UserRepository;
   readonly #rides: OngoingRideRepository;
   readonly #clock: Clock;
+  readonly #movements: BikeMovementRepository | undefined;
 
-  constructor({ users, rides, clock }: Dependencies) {
+  constructor({ users, rides, clock, movements }: Dependencies) {
     this.#users = users;
     this.#rides = rides;
     this.#clock = clock;
+    this.#movements = movements;
   }
 
   async handle({ userId, stationId }: TakeBike): Promise<void> {
@@ -28,6 +33,15 @@ export class TakeBikeHandler {
 
     const current = await this.#rides.ofUser(user.id);
     const ride = startRide({ userId: user.id, stationId, now: this.#clock.now(), current });
+
+    if (this.#movements) {
+      const before = await this.#movements.byStation(stationId);
+      if (!before) throw new Error(`unknown station ${stationId}`);
+      const station = Station.of({ id: before.id, docks: before.docks, bikes: before.bikes, brokenBikes: before.brokenBikes });
+      const bikeId = station.takeBike();
+      await this.#movements.take(before, station, { ...ride, bikeId });
+      return;
+    }
 
     // Le seul enregistrement, après toutes les vérifications : un refus n'a rien écrit.
     await this.#rides.save(ride);

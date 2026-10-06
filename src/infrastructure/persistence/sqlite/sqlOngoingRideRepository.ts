@@ -16,7 +16,7 @@ export function sqlOngoingRideRepository(database: DatabaseSync): OngoingRideRep
   return {
     async ofUser(userId) {
       const row = database
-        .prepare('select user_id, from_station_id, started_at from rides where user_id = ? order by started_at desc limit 1')
+        .prepare('select user_id, from_station_id, started_at from rides where user_id = ? and ended_at is null order by started_at desc limit 1')
         .get(userId) as RideRow | undefined;
       if (row === undefined) return undefined;
       return ongoingRideOf({ userId: row.user_id, fromStationId: row.from_station_id, startedAt: new Date(row.started_at) });

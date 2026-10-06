@@ -35,6 +35,10 @@ const SCHEMA = `
 export function openDatabase(location = ':memory:'): DatabaseSync {
   const database = new DatabaseSync(location);
   database.exec(SCHEMA);
+  // Migration additive : les anciens départs et le rapport US12 sont conservés.
+  const columns = database.prepare('pragma table_info(rides)').all().map((row) => row.name);
+  if (!columns.includes('bike_id')) database.exec('alter table rides add column bike_id text');
+  if (!columns.includes('ended_at')) database.exec('alter table rides add column ended_at text');
   return database;
 }
 
