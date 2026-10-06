@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Station } from '../../../domain/station.ts';
-import { userOf } from '../../../domain/user.ts';
+import { aUser } from '../../../testing/builders.ts';
 import { inMemoryUserRepository } from '../../../infrastructure/in-memory/inMemoryUserRepository.ts';
 import { inMemoryStationFollowerRepository } from '../../../infrastructure/in-memory/inMemoryStationFollowerRepository.ts';
 import { FollowStationHandler } from './followStation.handler.ts';
 
 function service() {
-    const users = inMemoryUserRepository([userOf({ id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'subscriber' })]);
+    const users = inMemoryUserRepository([aUser().build()]);
     const followers = inMemoryStationFollowerRepository();
     const stations = { byId: async (id: string) => id === 'gare' ? Station.of({ id, docks: 2 }) : undefined };
     return { followers, handler: new FollowStationHandler({ users, stations, followers }) };

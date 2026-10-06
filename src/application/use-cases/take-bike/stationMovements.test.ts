@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Station } from '../../../domain/station.ts';
-import { userOf } from '../../../domain/user.ts';
+import { aUser } from '../../../testing/builders.ts';
 import type { OngoingRide } from '../../../domain/ongoingRide.ts';
 import { inMemoryUserRepository } from '../../../infrastructure/in-memory/inMemoryUserRepository.ts';
 import { inMemoryOngoingRideRepository } from '../../../infrastructure/in-memory/inMemoryOngoingRideRepository.ts';
@@ -14,7 +14,7 @@ function service(destinationBikes: string[] = []) {
     const records = new Map<string, OngoingRide>();
     const movements = inMemoryBikeMovementRepository([Station.of({ id: 'gare', docks: 1, bikes: ['b1'] }), Station.of({ id: 'mairie', docks: 1, bikes: destinationBikes })], records);
     const rides = inMemoryOngoingRideRepository(records);
-    const users = inMemoryUserRepository([userOf({ id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'subscriber' })]);
+    const users = inMemoryUserRepository([aUser().build()]);
     const clock = { now: () => new Date('2026-10-06T08:00:00Z') };
     return { movements, rides, take: new TakeBikeHandler({ movements, users, clock, events: inMemoryEventBus() }), back: new ReturnBikeHandler({ movements, clock, events: inMemoryEventBus() }) };
 }
