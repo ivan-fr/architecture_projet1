@@ -51,3 +51,15 @@ test('seule l\'infrastructure lit l\'horloge de la machine', async () => {
     }
     assert.deepEqual(reading, []);
 });
+
+//DEMANDE 10 : la base SQL est un détail de stockage, rangé à un seul endroit
+test('seul le dossier persistence parle à la base SQL', async () => {
+    const files = (await sources('src')).filter(
+        (file) => !slash(file).startsWith('src/infrastructure/persistence/') && !slash(file).endsWith('.test.ts'),
+    );
+    const speaking: string[] = [];
+    for (const file of files) {
+        if (importsOf(await readFile(file, 'utf8')).includes('node:sqlite')) speaking.push(slash(file));
+    }
+    assert.deepEqual(speaking, []);
+});
