@@ -1,15 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-
-import { emailOf } from '../../../domain/email.ts';
 import { Station } from '../../../domain/station.ts';
-import type { User } from '../../../domain/user.ts';
 import { inMemoryBikeMovementRepository } from '../../../infrastructure/in-memory/inMemoryBikeMovementRepository.ts';
 import { inMemoryEventBus } from '../../../infrastructure/in-memory/inMemoryEventBus.ts';
 import { inMemoryUserRepository } from '../../../infrastructure/in-memory/inMemoryUserRepository.ts';
 import { TakeBikeHandler } from './takeBike.handler.ts';
+import { validUserInput } from '../../../testing/user.fixture.ts';
 
-const LINA: User = { id: 'u1', name: 'Lina', email: emailOf('lina@beaulieu.fr'), riderType: 'subscriber' };
+const LINA = validUserInput;
 const NOW = new Date('2026-10-03T08:15:00Z');
 const clockAt = (now: Date) => ({ now: () => now });
 

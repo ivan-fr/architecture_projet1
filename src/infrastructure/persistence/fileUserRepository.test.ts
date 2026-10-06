@@ -8,8 +8,9 @@ import { emailOf } from '../../domain/email.ts';
 import type { User } from '../../domain/user.ts';
 import { userRepositoryContract } from '../../testing/userRepository.contract.ts';
 import { fileUserRepository } from './fileUserRepository.ts';
+import { subValidUserInput } from '../../testing/user.fixture.ts';
 
-const LINA: User = { id: 'u1', name: 'Lina', email: emailOf('lina@beaulieu.fr'), riderType: 'subscriber' };
+const LINA: User = subValidUserInput;
 const THEO: User = { id: 'u2', name: 'Théo', email: emailOf('theo@beaulieu.fr'), riderType: 'non-subscriber' };
 
 /** Un fichier neuf dans un dossier neuf, effacé à la fin du test : aucun test ne dépend d'un autre. */

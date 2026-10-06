@@ -5,7 +5,9 @@ import type { Letter } from '../../../domain/ports/mailer.ts';
 import { inMemoryUserRepository } from '../../../infrastructure/in-memory/inMemoryUserRepository.ts';
 import { RegisterUserHandler } from './registerUser.handler.ts';
 
-const LINA = { id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'non-subscriber' };
+import {validUserInput} from '../../../testing/user.fixture.ts';
+
+const LINA = validUserInput;
 
 /** Un faux facteur : il note les lettres au lieu de les envoyer. Aucun vrai mail ne part. */
 function service() {

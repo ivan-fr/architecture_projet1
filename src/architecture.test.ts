@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+type TestCase = {
+    name: string;
+    block: string;
+};
+
 /**
  * Des tests qui ne vérifient pas un comportement, mais une décision d'architecture.
  * Ils échouent le jour où quelqu'un franchit une frontière, même pressé, même un soir.
@@ -31,6 +36,100 @@ async function offenders(layer: string, forbidden: string): Promise<string[]> {
     }
     return broken;
 }
+function testBlocks(code: string): string[] {
+    const blocks: string[] = [];
+    const lines = code.split(/\r?\n/);
+    let buffer: string[] = [];
+    let inBlock = false;
+
+    for (const line of lines) {
+        if (line.includes('test(') && !inBlock) {
+            inBlock = true;
+            buffer = [line];
+            continue;
+        }
+
+        if (inBlock) {
+            buffer.push(line);
+
+            if (line.includes('});')) {
+                blocks.push(buffer.join('\n'));
+                buffer = [];
+                inBlock = false;
+            }
+        }
+    }
+
+    return blocks;
+}
+
+function testCases(code: string): TestCase[] {
+    const cases: TestCase[] = [];
+    const lines = code.split(/\r?\n/);
+    let buffer: string[] = [];
+    let inBlock = false;
+    let name = '';
+
+    for (const line of lines) {
+        const match = line.match(/test\(\s*['"`]([^'"`]+)['"`]/);
+
+        if (match && !inBlock) {
+            name = match[1];
+            inBlock = true;
+            buffer = [line];
+            continue;
+        }
+
+        if (inBlock) {
+            buffer.push(line);
+
+            if (line.includes('});')) {
+                cases.push({ name, block: buffer.join('\n') });
+                buffer = [];
+                inBlock = false;
+                name = '';
+            }
+        }
+    }
+
+    return cases;
+}
+
+function preparationLines(block: string): number {
+    const lines = block.split(/\r?\n/);
+    let count = 0;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (!trimmed) continue;
+        if (trimmed.startsWith('//')) continue;
+        if (/assert\./.test(trimmed) || /assert\(/.test(trimmed) || /await assert\./.test(trimmed)) break;
+
+        count++;
+    }
+
+    return count;
+}
+
+//DEMANDE 17 : AUCUN TESTS N'A PLUS DE 10 LIGNES DE PREPARATION
+test('aucun test n’a plus de dix lignes de préparation', async () => {
+    const files = (await sources('src')).filter((file) => slash(file).endsWith('.test.ts'));
+    const offenders: string[] = [];
+
+    for (const file of files) {
+        const code = await readFile(file, 'utf8');
+        for (const testCase of testCases(code)) {
+            const lines = preparationLines(testCase.block);
+            if (lines > 10) {
+                offenders.push(`${slash(file)} :: "${testCase.name}" :: ${lines} lignes de préparation`);
+            }
+        }
+    }
+
+    assert.deepEqual(offenders, []);
+});
+
 
 //DEMANDE 05 : le métier ne sait pas que les usagers sont dans un fichier
 test('le domaine et l\'application ne connaissent pas l\'infrastructure', async () => {

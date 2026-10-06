@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 
 import { userOf } from './user.ts';
 
+import { subValidRandUserInput } from '../testing/user.fixture.ts';
+
 //DEMANDE 07
 test('un usager valide est construit tel quel', () => {
-    assert.deepEqual(userOf({ id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'subscriber' }), { id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'subscriber' });
+    assert.deepEqual(userOf(subValidRandUserInput), { id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'subscriber' });
 });
 
 test('un usager sans nom est refusé', () => {
