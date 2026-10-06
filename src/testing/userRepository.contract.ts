@@ -1,11 +1,11 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { emailOf } from '../domain/email.ts';
+import { aUser } from './builders.ts';
 import type { User } from '../domain/user.ts';
 import type { UserRepository } from '../domain/ports/userRepository.ts';
 
-const LINA: User = { id: 'u1', name: 'Lina', email: emailOf('lina@beaulieu.fr'), riderType: 'subscriber' };
+const LINA: User = aUser().build();
 
 /**
  * Le contrat du port `UserRepository`, écrit une fois, joué par chaque implémentation.
@@ -31,7 +31,7 @@ export function userRepositoryContract(name: string, make: () => Promise<UserRep
             const users = await make();
 
             await users.add(LINA);
-            await users.add({ ...LINA, riderType: 'non-subscriber' });
+            await users.add(aUser().nonSubscriber().build());
 
             assert.equal((await users.byId('u1'))?.riderType, 'non-subscriber');
         });
@@ -40,8 +40,8 @@ export function userRepositoryContract(name: string, make: () => Promise<UserRep
         test('un usager invalide est refusé, et rien n\'est enregistré', async () => {
             const users = await make();
 
-            await assert.rejects(() => users.add({ id: 'u9', name: '', email: emailOf('sam@beaulieu.fr'), riderType: 'subscriber' }), /name/);
-            await assert.rejects(() => users.add({ id: 'u9', name: 'Sam', email: emailOf('sam@beaulieu.fr'), riderType: 'vip' } as unknown as User), /rider type/);
+            await assert.rejects(() => users.add(aUser().withId('u9').named('').unchecked()), /name/);
+            await assert.rejects(() => users.add(aUser().withId('u9').named('Sam').withRiderType('vip').unchecked()), /rider type/);
             assert.equal(await users.byId('u9'), undefined);
         });
     });

@@ -5,9 +5,9 @@ import { inMemoryBikeMovementRepository } from '../../../infrastructure/in-memor
 import { inMemoryEventBus } from '../../../infrastructure/in-memory/inMemoryEventBus.ts';
 import { inMemoryUserRepository } from '../../../infrastructure/in-memory/inMemoryUserRepository.ts';
 import { TakeBikeHandler } from './takeBike.handler.ts';
-import { validUserInput } from '../../../testing/user.fixture.ts';
+import { aUser } from '../../../testing/builders.ts';
 
-const LINA = validUserInput;
+const LINA = aUser().build();
 const NOW = new Date('2026-10-03T08:15:00Z');
 const clockAt = (now: Date) => ({ now: () => now });
 

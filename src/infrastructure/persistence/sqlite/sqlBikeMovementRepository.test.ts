@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Station } from '../../../domain/station.ts';
-import { userOf } from '../../../domain/user.ts';
+import { aUser } from '../../../testing/builders.ts';
 import { emailOf } from '../../../domain/email.ts';
 import type { Letter } from '../../../domain/ports/mailer.ts';
 import { bikeMovementRepositoryContract } from '../../../testing/bikeMovementRepository.contract.ts';
@@ -27,7 +27,7 @@ async function service(t: { after(action: () => void): void }, failMail = false)
     t.after(() => database.close());
     await sqlStationRepository(database).save(Station.of({ id: 'gare', docks: 1, bikes: ['b1'] }));
     const users = sqlUserRepository(database), rides = sqlOngoingRideRepository(database), movements = sqlBikeMovementRepository(database);
-    await users.add(userOf({ id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'subscriber' }));
+    await users.add(aUser().build());
     const events = inMemoryEventBus(), letters: Letter[] = [];
     regulationMail(events, { send: async (letter) => { if (failMail) throw new Error('offline'); letters.push(letter); } }, [emailOf('regulation@beaulieu.fr')]);
     const clock = { now: () => new Date('2026-10-06T08:00:00Z') };
