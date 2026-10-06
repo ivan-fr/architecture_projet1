@@ -31,7 +31,7 @@ async function service(t: { after(action: () => void): void }, failMail = false)
     const events = inMemoryEventBus(), letters: Letter[] = [];
     regulationMail(events, { send: async (letter) => { if (failMail) throw new Error('offline'); letters.push(letter); } }, [emailOf('regulation@beaulieu.fr')]);
     const clock = { now: () => new Date('2026-10-06T08:00:00Z') };
-    return { database, letters, events, movements, rides, take: new TakeBikeHandler({ users, rides, movements, events, clock }), back: new ReturnBikeHandler({ movements, events, clock }) };
+    return { database, letters, events, movements, rides, take: new TakeBikeHandler({ users, movements, events, clock }), back: new ReturnBikeHandler({ movements, events, clock }) };
 }
 
 test('SQL : vide puis pleine, deux mails après les mouvements, et le départ reste dans l’historique', async (t) => {

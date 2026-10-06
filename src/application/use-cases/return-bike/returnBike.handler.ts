@@ -6,13 +6,23 @@ import type { Clock } from '../../../domain/ports/clock.ts';
 import type { BikeMovementRepository } from '../../../domain/ports/bikeMovementRepository.ts';
 import type { ReturnBike } from './returnBike.command.ts';
 
-interface Dependencies { movements: BikeMovementRepository; clock: Clock; events?: EventPublisher; }
+interface Dependencies {
+  movements: BikeMovementRepository;
+  clock: Clock;
+  events: EventPublisher;
+}
 
+/** Rendre un vélo : le vélo du trajet de l'usager occupe une borne, et le trajet se termine. */
 export class ReturnBikeHandler {
   readonly #movements: BikeMovementRepository;
   readonly #clock: Clock;
-  readonly #events: EventPublisher | undefined;
-  constructor({ movements, clock, events }: Dependencies) { this.#movements = movements; this.#clock = clock; this.#events = events; }
+  readonly #events: EventPublisher;
+
+  constructor({ movements, clock, events }: Dependencies) {
+    this.#movements = movements;
+    this.#clock = clock;
+    this.#events = events;
+  }
 
   async handle({ userId, stationId }: ReturnBike): Promise<void> {
     const ride = await this.#movements.rideOfUser(userId);

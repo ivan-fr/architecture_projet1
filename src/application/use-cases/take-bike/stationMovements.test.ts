@@ -6,6 +6,7 @@ import type { OngoingRide } from '../../../domain/ongoingRide.ts';
 import { inMemoryUserRepository } from '../../../infrastructure/in-memory/inMemoryUserRepository.ts';
 import { inMemoryOngoingRideRepository } from '../../../infrastructure/in-memory/inMemoryOngoingRideRepository.ts';
 import { inMemoryBikeMovementRepository } from '../../../infrastructure/in-memory/inMemoryBikeMovementRepository.ts';
+import { inMemoryEventBus } from '../../../infrastructure/in-memory/inMemoryEventBus.ts';
 import { TakeBikeHandler } from './takeBike.handler.ts';
 import { ReturnBikeHandler } from '../return-bike/returnBike.handler.ts';
 
@@ -15,7 +16,7 @@ function service(destinationBikes: string[] = []) {
     const rides = inMemoryOngoingRideRepository(records);
     const users = inMemoryUserRepository([userOf({ id: 'u1', name: 'Lina', email: 'lina@beaulieu.fr', riderType: 'subscriber' })]);
     const clock = { now: () => new Date('2026-10-06T08:00:00Z') };
-    return { movements, rides, take: new TakeBikeHandler({ movements, users, rides, clock }), back: new ReturnBikeHandler({ movements, clock }) };
+    return { movements, rides, take: new TakeBikeHandler({ movements, users, clock, events: inMemoryEventBus() }), back: new ReturnBikeHandler({ movements, clock, events: inMemoryEventBus() }) };
 }
 
 test('le départ enregistre le trajet et retire le vélo, puis le retour rend ce même vélo', async () => {
@@ -42,4 +43,11 @@ test('modifier une date relue ne change pas le trajet enregistré', async () => 
     const copy = (await rides.ofUser('u1'))!;
     copy.startedAt.setTime(NaN);
     assert.equal((await rides.ofUser('u1'))?.startedAt.toISOString(), '2026-10-06T08:00:00.000Z');
+});
+
+test('un départ depuis une station inconnue est refusé, et rien n\'est enregistré', async () => {
+    const { take, movements } = service();
+
+    await assert.rejects(() => take.handle({ userId: 'u1', stationId: 'inconnue' }), /unknown station/);
+    assert.equal(await movements.rideOfUser('u1'), undefined);
 });

@@ -19,8 +19,14 @@ test('une station intermédiaire ou inchangée ne produit aucun événement', ()
     assert.deepEqual(stationBoundary(at(['b1', 'b2']), at(['b1', 'b2'])), []);
 });
 
-test('un vélo en panne reste à quai : la station ne devient pas vide', () => {
+test('il ne reste que des vélos en panne : plus rien à prendre, la station est annoncée vide', () => {
     const before = Station.of({ id: 'gare', docks: 2, bikes: ['b1', 'b2'], brokenBikes: ['b1'] });
     const after = Station.of({ id: 'gare', docks: 2, bikes: ['b1'], brokenBikes: ['b1'] });
+    assert.deepEqual(stationBoundary(before, after), [{ type: 'StationEmpty', stationId: 'gare' }]);
+});
+
+test('une station sans vélo disponible au départ ne redevient pas vide', () => {
+    const before = Station.of({ id: 'gare', docks: 3, bikes: ['b1'], brokenBikes: ['b1'] });
+    const after = Station.of({ id: 'gare', docks: 3, bikes: ['b1'], brokenBikes: ['b1'] });
     assert.deepEqual(stationBoundary(before, after), []);
 });

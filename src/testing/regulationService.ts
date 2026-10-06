@@ -24,5 +24,5 @@ export function regulationService(options: { count?: number; docks?: number; des
   const events = inMemoryEventBus();
   const letters: Letter[] = [];
   regulationMail(events, options.mailer ?? { send: async (letter) => { letters.push(letter); } }, [emailOf('regulation@beaulieu.fr')]);
-  return { movements, rides, events, letters, take: new TakeBikeHandler({ users, rides, clock, movements, events }), back: new ReturnBikeHandler({ movements, clock, events }) };
+  return { movements, rides, events, letters, take: new TakeBikeHandler({ users, clock, movements, events }), back: new ReturnBikeHandler({ movements, clock, events }) };
 }
