@@ -30,3 +30,16 @@ test('une station sans vélo disponible au départ ne redevient pas vide', () =>
     const after = Station.of({ id: 'gare', docks: 3, bikes: ['b1'], brokenBikes: ['b1'] });
     assert.deepEqual(stationBoundary(before, after), []);
 });
+
+test('19/20 : un vélo pris ne déclenche pas StationFull', () => {
+    const before = Station.of({ id: 'gare', docks: 20, bikes: Array.from({ length: 19 }, (_, i) => `b${i + 1}`) });
+    const after = Station.of({ id: 'gare', docks: 20, bikes: Array.from({ length: 18 }, (_, i) => `b${i + 1}`) });
+    assert.deepEqual(stationBoundary(before, after), []);
+});
+
+test('si la station passe à 25 bornes, le calcul reste dynamique : un seul changement suffit', () => {
+    const before = Station.of({ id: 'gare', docks: 25, bikes: Array.from({ length: 24 }, (_, i) => `b${i + 1}`) });
+    const after = Station.of({ id: 'gare', docks: 25, bikes: Array.from({ length: 25 }, (_, i) => `b${i + 1}`) });
+
+    assert.deepEqual(stationBoundary(before, after), [{ type: 'StationFull', stationId: 'gare' }]);
+});
