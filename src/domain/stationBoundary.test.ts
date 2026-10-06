@@ -2,11 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Station } from './station.ts';
 import { stationBoundary } from './stationBoundary.ts';
-import { inMemoryBikeMovementRepository } from '../infrastructure/in-memory/inMemoryBikeMovementRepository.ts';
-import { inMemoryUserRepository } from '../infrastructure/in-memory/inMemoryUserRepository.ts';
-import { userOf } from './user.ts';
-import { TakeBikeHandler } from '../application/use-cases/take-bike/takeBike.handler.ts';
-import { inMemoryEventBus } from '../infrastructure/in-memory/inMemoryEventBus.ts';
 
 const at = (bikes: string[], docks = 2) => Station.of({ id: 'gare', docks, bikes });
 

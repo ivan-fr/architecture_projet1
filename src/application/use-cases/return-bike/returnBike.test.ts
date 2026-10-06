@@ -1,67 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { Station } from '../../../domain/station.ts';
-import { userOf } from '../../../domain/user.ts';
 import { inMemoryBikeMovementRepository } from '../../../infrastructure/in-memory/inMemoryBikeMovementRepository.ts';
 import { inMemoryEventBus } from '../../../infrastructure/in-memory/inMemoryEventBus.ts';
-import { inMemoryUserRepository } from '../../../infrastructure/in-memory/inMemoryUserRepository.ts';
+import { aStation } from '../../../testing/builders.ts';
 import { ReturnBikeHandler } from './returnBike.handler.ts';
 
-test('20/20 : une station pleine refuse le retour d’un vélo', async () => {
-    const now = new Date('2026-10-06T08:00:00Z');
+const NOW = new Date('2026-10-06T08:00:00Z');
 
-    // important : le vélo du trajet n'est PAS déjà dans la station
-    const bikeId = 'x99';
+/** Lina roule avec le vélo x99 et le rend à la gare, une station de 20 bornes qui a déjà `bikes` vélos. */
+function returningToAStationWith(bikes: number) {
+    const ride = { userId: 'u1', fromStationId: 'mairie', startedAt: NOW, bikeId: 'x99' };
+    const movements = inMemoryBikeMovementRepository([aStation().withDocks(20).withBikes(bikes).build()], new Map([['u1', ride]]));
+    const handler = new ReturnBikeHandler({ movements, clock: { now: () => NOW }, events: inMemoryEventBus() });
+    return { movements, giveBack: () => handler.handle({ userId: 'u1', stationId: 'gare' }) };
+}
 
-    const records = new Map([
-        ['u1', { userId: 'u1', fromStationId: 'gare', startedAt: now, bikeId }],
-    ]);
+//DEMANDE 18 : la borne, par le cas d'usage « rendre un vélo »
+test('20 vélos pour 20 bornes : la borne refuse le vélo, et la station ne change pas', async () => {
+    const { movements, giveBack } = returningToAStationWith(20);
 
-    const movements = inMemoryBikeMovementRepository([
-        Station.of({ id: 'gare', docks: 20, bikes: Array.from({ length: 20 }, (_, i) => `b${i + 1}`) }),
-    ], records);
-
-    const users = inMemoryUserRepository([
-        userOf({ id: 'u1', name: 'u1', email: 'u1@beaulieu.fr', riderType: 'subscriber' }),
-    ]);
-
-    const handler = new ReturnBikeHandler({
-        movements,
-        clock: { now: () => now },
-        events: inMemoryEventBus(),
-    });
-
-    await assert.rejects(
-        () => handler.handle({ userId: 'u1', stationId: 'gare' }),
-        /station gare is full/,
-    );
+    await assert.rejects(giveBack, /station gare is full/);
+    assert.equal((await movements.byStation('gare'))?.bikes.length, 20);
 });
 
-test('19/20 : une place libre permet le retour', async () => {
-    const now = new Date('2026-10-06T08:00:00Z');
-    const bikeId = 'x99';
+test('19 vélos : la borne accepte le vélo, et la station est pleine', async () => {
+    const { movements, giveBack } = returningToAStationWith(19);
 
-    const records = new Map([
-        ['u1', { userId: 'u1', fromStationId: 'gare', startedAt: now, bikeId }],
-    ]);
+    await giveBack();
 
-    const movements = inMemoryBikeMovementRepository([
-        Station.of({ id: 'gare', docks: 20, bikes: Array.from({ length: 19 }, (_, i) => `b${i + 1}`) }),
-    ], records);
-
-    const users = inMemoryUserRepository([
-        userOf({ id: 'u1', name: 'u1', email: 'u1@beaulieu.fr', riderType: 'subscriber' }),
-    ]);
-
-    const handler = new ReturnBikeHandler({
-        movements,
-        clock: { now: () => now },
-        events: inMemoryEventBus(),
-    });
-
-    await handler.handle({ userId: 'u1', stationId: 'gare' });
-
-    const station = await movements.byStation('gare');
-    assert.equal(station?.bikes.length, 20);
+    assert.equal((await movements.byStation('gare'))?.freeDocks, 0);
 });
