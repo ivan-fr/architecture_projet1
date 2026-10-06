@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openDatabase } from './sqliteDatabase.ts';
-import { seedFollowedStations, sqlFollowedStationService } from './testing/followedStationService.ts';
+import { seedFollowedStations, sqlFollowedStationService } from '../../../testing/sqlFollowedStationService.ts';
 
 async function savedFollows(t: TestContext): Promise<string> {
     const folder = await mkdtemp(join(tmpdir(), 'velos-notifications-'));
@@ -22,14 +22,18 @@ async function savedFollows(t: TestContext): Promise<string> {
 
 test('SQL : après redémarrage, le trajet déclenche mail et appli pour les bons suiveurs', async (t) => {
     const path = await savedFollows(t);
+    // La base est fermée avant la fin du test : sous Windows, un fichier SQLite ouvert ne peut pas être effacé.
     const database = openDatabase(path);
-    t.after(() => database.close());
     const { take, back, letters, app, rides } = sqlFollowedStationService(database);
-    await take.handle({ userId: 'u3', stationId: 'gare' });
-    await back.handle({ userId: 'u3', stationId: 'mairie' });
+    let rideAfterReturn;
+    try {
+        await take.handle({ userId: 'u3', stationId: 'gare' });
+        await back.handle({ userId: 'u3', stationId: 'mairie' });
+        rideAfterReturn = await rides.ofUser('u3');
+    } finally { database.close(); }
     assert.deepEqual(app.notifications, [{ userId: 'u1', stationId: 'gare', type: 'StationEmpty' }, { userId: 'u2', stationId: 'mairie', type: 'StationFull' }]);
     assert.equal(letters.length, 2);
-    assert.equal(await rides.ofUser('u3'), undefined);
+    assert.equal(rideAfterReturn, undefined);
 });
 
 test('SQL : l’écriture refusée du trajet ne déclenche ni mail ni appli', async (t) => {

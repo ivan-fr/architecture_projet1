@@ -54,8 +54,12 @@ test('seule l\'infrastructure lit l\'horloge de la machine', async () => {
 
 //DEMANDE 10 : la base SQL est un détail de stockage, rangé à un seul endroit
 test('seul le dossier persistence parle à la base SQL', async () => {
+    // La règle vise le code de production : les tests et l'outillage de test (src/testing) peuvent ouvrir une base.
     const files = (await sources('src')).filter(
-        (file) => !slash(file).startsWith('src/infrastructure/persistence/') && !slash(file).endsWith('.test.ts'),
+        (file) =>
+            !slash(file).startsWith('src/infrastructure/persistence/') &&
+            !slash(file).startsWith('src/testing/') &&
+            !slash(file).endsWith('.test.ts'),
     );
     const speaking: string[] = [];
     for (const file of files) {

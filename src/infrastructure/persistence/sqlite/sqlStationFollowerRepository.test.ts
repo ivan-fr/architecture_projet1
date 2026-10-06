@@ -31,8 +31,12 @@ test('les suivis survivent à une nouvelle connexion et ne sont pas dupliqués',
     const before = openDatabase(path);
     try { await seed(before); await sqlStationFollowerRepository(before).follow({ userId: 'u1', stationId: 'gare' }); }
     finally { before.close(); }
+    // La base est fermée avant la fin du test : sous Windows, un fichier SQLite ouvert ne peut pas être effacé.
     const after = openDatabase(path);
-    t.after(() => after.close());
-    await sqlStationFollowerRepository(after).follow({ userId: 'u1', stationId: 'gare' });
-    assert.deepEqual(await sqlStationFollowerRepository(after).followersOf('gare'), ['u1']);
+    let followers;
+    try {
+        await sqlStationFollowerRepository(after).follow({ userId: 'u1', stationId: 'gare' });
+        followers = await sqlStationFollowerRepository(after).followersOf('gare');
+    } finally { after.close(); }
+    assert.deepEqual(followers, ['u1']);
 });

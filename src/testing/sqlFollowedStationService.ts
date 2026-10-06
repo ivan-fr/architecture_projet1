@@ -1,20 +1,20 @@
 import type { DatabaseSync } from 'node:sqlite';
-import { Station } from '../../../../domain/station.ts';
-import { emailOf } from '../../../../domain/email.ts';
-import { userOf } from '../../../../domain/user.ts';
-import type { Letter } from '../../../../domain/ports/mailer.ts';
-import { sqlStationRepository } from '../sqlStationRepository.ts';
-import { sqlUserRepository } from '../sqlUserRepository.ts';
-import { sqlStationFollowerRepository } from '../sqlStationFollowerRepository.ts';
-import { sqlBikeMovementRepository } from '../sqlBikeMovementRepository.ts';
-import { sqlOngoingRideRepository } from '../sqlOngoingRideRepository.ts';
-import { inMemoryEventBus } from '../../../in-memory/inMemoryEventBus.ts';
-import { inMemoryAppNotifier } from '../../../in-memory/inMemoryAppNotifier.ts';
-import { TakeBikeHandler } from '../../../../application/use-cases/take-bike/takeBike.handler.ts';
-import { ReturnBikeHandler } from '../../../../application/use-cases/return-bike/returnBike.handler.ts';
-import { FollowStationHandler } from '../../../../application/use-cases/follow-station/followStation.handler.ts';
-import { stationFollowersApp } from '../../../../application/listeners/stationFollowersApp.ts';
-import { regulationMail } from '../../../../application/listeners/regulationMail.ts';
+import { Station } from '../domain/station.ts';
+import { emailOf } from '../domain/email.ts';
+import { userOf } from '../domain/user.ts';
+import type { Letter } from '../domain/ports/mailer.ts';
+import { sqlStationRepository } from '../infrastructure/persistence/sqlite/sqlStationRepository.ts';
+import { sqlUserRepository } from '../infrastructure/persistence/sqlite/sqlUserRepository.ts';
+import { sqlStationFollowerRepository } from '../infrastructure/persistence/sqlite/sqlStationFollowerRepository.ts';
+import { sqlBikeMovementRepository } from '../infrastructure/persistence/sqlite/sqlBikeMovementRepository.ts';
+import { sqlOngoingRideRepository } from '../infrastructure/persistence/sqlite/sqlOngoingRideRepository.ts';
+import { inMemoryEventBus } from '../infrastructure/in-memory/inMemoryEventBus.ts';
+import { inMemoryAppNotifier } from '../infrastructure/in-memory/inMemoryAppNotifier.ts';
+import { TakeBikeHandler } from '../application/use-cases/take-bike/takeBike.handler.ts';
+import { ReturnBikeHandler } from '../application/use-cases/return-bike/returnBike.handler.ts';
+import { FollowStationHandler } from '../application/use-cases/follow-station/followStation.handler.ts';
+import { stationFollowersApp } from '../application/listeners/stationFollowersApp.ts';
+import { regulationMail } from '../application/listeners/regulationMail.ts';
 
 export async function seedFollowedStations(database: DatabaseSync): Promise<void> {
   const users = sqlUserRepository(database), stations = sqlStationRepository(database);
