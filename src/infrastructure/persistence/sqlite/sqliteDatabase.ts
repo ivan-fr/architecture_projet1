@@ -22,10 +22,12 @@ const SCHEMA = `
     primary key (station_id, bike_id)
   );
 
-  create table if not exists ongoing_rides (
-    user_id         text primary key,
+  -- L'historique des départs : une ligne par trajet, jamais écrasée. Le trajet en cours d'un usager est son dernier départ.
+  create table if not exists rides (
+    user_id         text not null,
     from_station_id text not null,
-    started_at      text not null
+    started_at      text not null,
+    primary key (user_id, started_at)
   );
 `;
 
