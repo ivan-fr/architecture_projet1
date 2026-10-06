@@ -79,3 +79,23 @@ test('une station sans borne, ou avec un nombre de bornes absurde, est refusée'
 test('une station sans identifiant est refusée', () => {
     assert.throws(() => Station.of({ id: ' ', docks: 20 }), /id/);
 });
+
+//DEMANDE 11 : la station sait quels vélos sont en panne
+test('les vélos disponibles sont ceux à quai qui ne sont pas en panne', () => {
+    const station = Station.of({ id: 'gare', docks: 20, bikes: bikes(5), brokenBikes: ['b2', 'b4'] });
+
+    assert.equal(station.availableBikes, 3);
+    assert.deepEqual(station.brokenBikes, ['b2', 'b4']);
+});
+
+test('on ne prend jamais un vélo en panne', () => {
+    const station = Station.of({ id: 'gare', docks: 20, bikes: ['b1', 'b2'], brokenBikes: ['b1'] });
+
+    assert.equal(station.takeBike(), 'b2');
+    assert.throws(() => station.takeBike(), /empty/);
+    assert.deepEqual(station.bikes, ['b1']);
+});
+
+test('un vélo en panne qui n\'est pas à quai est une donnée absurde, refusée', () => {
+    assert.throws(() => Station.of({ id: 'gare', docks: 20, bikes: ['b1'], brokenBikes: ['b9'] }), /not docked/);
+});

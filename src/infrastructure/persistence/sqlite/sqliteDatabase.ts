@@ -18,6 +18,7 @@ const SCHEMA = `
     station_id text not null references stations (id),
     bike_id    text not null,
     position   integer not null,
+    broken     integer not null default 0,
     primary key (station_id, bike_id)
   );
 
